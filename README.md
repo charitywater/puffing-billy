@@ -186,6 +186,11 @@ Billy.configure do |c|
   c.non_successful_error_level = :warn
   c.non_whitelisted_requests_disabled = false
   c.cache_path = 'spec/req_cache/'
+  c.key_generators = {
+    "example.com" => ->(method, url, body) {
+      "custom_hash_key_#{method}_#{Digest::Sha1.hexdigest(url.to_s)}"
+    }
+  }
 end
 ```
 
@@ -235,6 +240,15 @@ no cache file exists.  Only whitelisted URLs (on non-blacklisted paths) are
 allowed, all others will throw an error with the URL attempted to be accessed.
 This is useful for debugging issues in isolated environments (ie.
 continuous integration).
+
+`c.key_generators` is used to define custom methods for specific hosts
+to generate the hash key for a request.  If `ignore_params`,
+`dynamic_jsonp`, and `dynamic_jsonp_keys` don't offer enough control to
+generate consistent hash keys for certain hosts, you can define a lambda
+for that host in `key_generators` that will be called with the method,
+url (as an instance of URI), and body of a request and expected to return a suitable hash key
+for that request.  If the lambda returns nil, the default hashing
+algorithm will be used.
 
 ### Cache Scopes
 
