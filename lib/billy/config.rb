@@ -6,7 +6,7 @@ module Billy
     DEFAULT_WHITELIST = ['127.0.0.1', 'localhost']
     RANDOM_AVAILABLE_PORT = 0 # https://github.com/eventmachine/eventmachine/wiki/FAQ#wiki-can-i-start-a-server-on-a-random-available-port
 
-    attr_accessor :logger, :cache, :cache_request_headers, :whitelist, :path_blacklist, :ignore_params,
+    attr_accessor :logger, :cache, :cache_request_headers, :whitelist, :path_blacklist, :ignore_params, :key_generators,
                   :persist_cache, :ignore_cache_port, :non_successful_cache_disabled, :non_successful_error_level,
                   :non_whitelisted_requests_disabled, :cache_path, :proxy_port, :proxied_request_inactivity_timeout,
                   :proxied_request_connect_timeout, :dynamic_jsonp, :dynamic_jsonp_keys
@@ -22,6 +22,7 @@ module Billy
       @whitelist = DEFAULT_WHITELIST
       @path_blacklist = []
       @ignore_params = []
+      @key_generators = {}
       @persist_cache = false
       @dynamic_jsonp = false
       @dynamic_jsonp_keys = ["callback"]

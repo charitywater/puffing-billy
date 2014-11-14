@@ -73,16 +73,13 @@ module Billy
     def key(method, orig_url, body, log_key = false)
       ignore_params = Billy.config.ignore_params.include?(format_url(orig_url, true))
       url = URI(format_url(orig_url, ignore_params))
-      key = method+'_'+url.host+'_'+Digest::SHA1.hexdigest(scope.to_s + url.to_s)
-      body_msg = ''
 
-      if method == 'post' and !ignore_params
-        body_formatted = JSONUtils::json?(body.to_s) ? JSONUtils::sort_json(body.to_s) : body.to_s
-        body_msg = " with body '#{body_formatted}'"
-        key += '_'+Digest::SHA1.hexdigest(body_formatted)
-      end
+      key =
+        (Billy.config.key_generators[url.host] && Billy.config.key_generators[url.host].call(method, url, body)) ||
+         default_key(method, url, body, ignore_params)
 
-      Billy.log(:info, "puffing-billy: CACHE KEY for '#{orig_url}#{body_msg}' is '#{key}'") if log_key
+      Billy.log(:info, "puffing-billy: CACHE KEY for '#{orig_url}#{body_msg_for(body, method, ignore_params)}' is '#{key}'") if log_key
+
       key
     end
 
@@ -134,5 +131,24 @@ module Billy
     private
 
     attr_writer :scope
+
+    def default_key(method, url, body, ignore_params)
+      key = method+'_'+url.host+'_'+Digest::SHA1.hexdigest(scope.to_s + url.to_s)
+      if formatted_body_for(body, method, ignore_params)
+        key += Digest::SHA1.hexdigest(formatted_body_for(body, method, ignore_params))
+      end
+
+      key
+    end
+
+    def body_msg_for body, method, ignore_params
+      return nil if method != 'post' || ignore_params
+      " with body '#{formatted_body_for(body, method, ignore_params)}'"
+    end
+
+    def formatted_body_for body, method, ignore_params
+      return nil if method != 'post' || ignore_params
+      JSONUtils::json?(body.to_s) ? JSONUtils::sort_json(body.to_s) : body.to_s
+    end
   end
 end
